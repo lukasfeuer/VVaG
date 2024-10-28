@@ -1,0 +1,115 @@
+---
+title: "Analyse - Freie Berufe & Rente"
+format: 
+  html:
+    theme: flatly
+editor: visual
+self-contained: true
+---
+
+# Freie Berufe
+
+## Fragestellungen
+
+- Welcher Inflationsindex passt am besten zu den Daten?
+- Was fällt bei den verschiedenen Indizes auf? 
+- Wie können die Unterschiede zwischen den Indizes erklärt werden? 
+
+
+```{r}
+#| label: data_load
+#| echo: false
+#| warning: false
+#| message: false
+
+library(tidyverse)
+
+thematic::thematic_off()
+
+d_raw <- readxl::read_xlsx("../data/Aufgabe FB.xlsx", skip = 3)
+
+d <- d_raw |>
+  transmute(
+    Jahr = factor(Anfalljahr)
+    , Schadensbedarf = `Historischer Schadenbedarf`
+    , `Index A` = `Jährliche Inflation Index A`
+    , `Index B` = `Jährliche Inflation Index B`
+    , `Index C` = `Jährliche Inflation Index C`
+  ) |>
+  pivot_longer(cols = 2:5, names_to = "name", values_to = "Jährliche Inflation")
+
+```
+
+```{r}
+#| code-fold: true
+d |>
+  filter(name == "Schadensbedarf") |> 
+  ggplot(aes(Jahr, `Jährliche Inflation`, group = name)) +
+  geom_line() +
+  scale_y_continuous(labels = scales::dollar_format()) +
+  labs(
+    title = "Jährlicher Schadensbedarf"
+    , x = NULL, y = NULL
+  ) +
+  theme(legend.position = "none")
+```
+
+```{r}
+#| code-fold: true
+d |>
+  filter(name != "Schadensbedarf") |> 
+  ggplot(aes(Jahr, `Jährliche Inflation`, colour = name, group = name)) +
+  geom_line() +
+  facet_wrap(vars(name), scales = "free_y", ncol = 1) +
+  scale_y_continuous(labels = scales::percent_format()) +
+  labs(
+    title = "Jährliche Inflation"
+    , subtitle = "Veränderungsraten von 2013 bis 2023"
+    , x = NULL, y = NULL
+  ) +
+  theme(legend.position = "none")
+```
+
+```{r}
+#| code-fold: true
+
+d_raw |>
+  transmute(
+    Jahr = factor(Anfalljahr)
+    , Schadensbedarf = `Historischer Schadenbedarf`
+    , `Index A` = `Jährliche Inflation Index A` +1
+    , `Index B` = `Jährliche Inflation Index B` +1
+    , `Index C` = `Jährliche Inflation Index C` +1
+  ) -> x
+
+tribble(
+  ~Jahr, ~Schadensbedarf, ~`Index A`, ~`Index B`, ~`Index C`
+  , 2012, 0, 100, 100, 100
+) |> mutate(Jahr = factor(Jahr)) |>
+  bind_rows(x) |>
+  transmute(
+    Jahr
+    , `Index A` = accumulate(`Index A`, `*`)
+    , `Index B` = accumulate(`Index B`, `*`)
+    , `Index C` = accumulate(`Index C`, `*`)
+  ) |>
+  pivot_longer(2:4, names_to = "Index", values_to = "Wert") |>
+  ggplot(aes(Jahr, Wert, group = Index, colour = Index)) +
+  geom_line() +
+  facet_wrap(vars(Index), ncol = 1, scales = "free_y") +
+  labs(
+    title = "Jährliche Inflation"
+    , subtitle = "Indizes von 2013 bis 2023, Basisjahr = 2012"
+    , x = NULL, y = NULL
+  ) +
+  theme(legend.position = "none")
+```
+
+
+# Renten
+
+## Fragestellungen
+
+- Welche zusätzliche Information lassen sich aus den vorhandenen Daten ableiten?
+- Welche Auffälligkeiten oder Zusammenhänge lassen sich im Datensatz finden?
+
