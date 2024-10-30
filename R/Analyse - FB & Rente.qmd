@@ -105,6 +105,69 @@ tribble(
   theme(legend.position = "none")
 ```
 
+- Indizes B und C haben einen sehr ähnlichen Verlauf (kolinear siehe unten)
+- Die Veränderungsraten von Index B und Index C kovairiieren auf den ersten Blick eher mit der Zeitreiehe des Schadenbedarfs als Index A
+- Als Index mit dem Basisjahr 2012 ergibt sich für Index B eine Steigerung von 22% über den Betrachtungszeitraum, dies deckt sich am ehesten mit der Veränderung von 33,1% in den Schadensbedarfen
+- Die Veränderung in Index A mit etwa 35% stimmt jedoch am ehesten mit der absoluten Zunahme in den Schadensbedarfen am Ende des Betrachtungszeitraums überein 
+
+
+```{r}
+#| code-fold: true
+#| warning: false
+
+library(fpp3)
+
+d_raw |> 
+  rename(
+    Schadensbedarf = `Historischer Schadenbedarf`
+    , `Index A` = `Jährliche Inflation Index A`
+    , `Index B` = `Jährliche Inflation Index B`
+    , `Index C` = `Jährliche Inflation Index C`
+  ) |> 
+  GGally::ggpairs(2:5)
+
+```
+
+- Indizes B und C sind perfekt kolinear 
+- Paarweise Vergleiche zeigen hohe bivariate Korrelationen von Index B/C mit den jährlichen Schadensbedarfen
+- Index A korreliert negativ mit den Schadensbedarfen 
+- Zur Abschätzung der marginalen Effekte wird eine einfache Multivariate Regression für Zeitreihen gerechnet (Einschränkungen durch geringe Stichprobengröße bei Interpretation berücksichtigen)
+- Schadensbedarfe haben scheinbar einen leichten positiven Trend, daher wird auch ein Modell mit einem `trend()` getestet
+
+```{r}
+#| code-fold: true
+fit_schaden <- d_raw |> 
+  tsibble(index = Anfalljahr) |> 
+  model(
+    TSLM_AB = TSLM(`Historischer Schadenbedarf` ~  `Jährliche Inflation Index A` + `Jährliche Inflation Index B`)
+    , TSLM_AB_Trend = TSLM(`Historischer Schadenbedarf` ~ trend() + `Jährliche Inflation Index A` + `Jährliche Inflation Index B`)
+    , TSLM_B_Trend = TSLM(`Historischer Schadenbedarf` ~ trend() + `Jährliche Inflation Index B`)
+    , TSLM_B = TSLM(`Historischer Schadenbedarf` ~ `Jährliche Inflation Index B`)
+    )
+
+glance(fit_schaden) |> 
+  transmute(Model = .model, adj_r_squared, CV, AIC, AICc, BIC) |> 
+  knitr::kable()
+```
+```{r}
+#| code-fold: true
+
+fit_schaden_final <- d_raw |> 
+  tsibble(index = Anfalljahr) |> 
+  model(
+    tslm = TSLM(`Historischer Schadenbedarf` ~ `Jährliche Inflation Index B`)
+    )
+report(fit_schaden_final)
+```
+
+- Gesamtheitliche Betrachtung der Informationskriterien zeigt, dass ein Modell nur mit Index B zu bevorzugen ist, auch wenn R^2^ dadurch nicht maximiert wird 
+- Ein Trend verbessert die Varianzaufklärung, ist jedoch insbesondere unter Berücksichtigung des AICc keine bedeutende Ergänzung für das Modell
+- Vergleiche der Modelle zeigen damit auch keinen zusätzlichen Informationszugewinn durch das Einbeziehen von Index A 
+
+> **Index B bildet insgesamt zwar nicht den gesamten Effekt in der Entwicklung der Schadensbedarfe ab, jedoch wäre er basierend auf den verfügbaren Informationen ein vielversprechender Prädiktor.**
+
+
+TODO: haben wir in Zeitreihe A einen Outlier und wie würde dies die Ergebnisse verändern? 
 
 # Renten
 
