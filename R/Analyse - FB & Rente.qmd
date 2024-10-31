@@ -158,6 +158,7 @@ fit_schaden_final <- d_raw |>
     tslm = TSLM(`Historischer Schadenbedarf` ~ `Jährliche Inflation Index B`)
     )
 report(fit_schaden_final)
+gg_tsresiduals(fit_schaden_final)
 ```
 
 - Gesamtheitliche Betrachtung der Informationskriterien zeigt, dass ein Modell nur mit Index B zu bevorzugen ist, auch wenn R^2^ dadurch nicht maximiert wird 
