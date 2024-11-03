@@ -293,6 +293,7 @@ d |>
 ```{r}
 #| code-fold: true
 #| warning: false
+# layout: [[1,1]]
 library(ggridges)
 d |>
   ggplot(aes(x = Renten_Auszahlung, Ort, fill = Ort)) +
@@ -301,12 +302,7 @@ d |>
   theme_ridges() +
   theme(legend.position = "none") +
   labs(x = NULL, y = NULL, title = "Verteilung der Rentenauszahlungen pro Stadt")
-```
 
-
-```{r}
-#| code-fold: true
-#| warning: false
 d |>
   count(Strasse, sort = T) |>
   ggplot(aes(x = n, y = Strasse)) +
@@ -314,6 +310,8 @@ d |>
   lims(x = c(0, 40))+
   labs(x = NULL, y = NULL, title = "Häufigkeit der Straßennamen")
 ```
+
+
 
 
 ## Verteilung Rentenauszahlung
@@ -414,8 +412,10 @@ pl1 <- d |>
   ) |>
   count(ym, Segment) |>
   tsibble(index = ym, key = Segment) |>
-  autoplot() 
-  plotly::ggplotly(pl1)
+  autoplot() |> 
+  plotly::ggplotly()
+
+pl1
 ```
 
 
@@ -433,8 +433,12 @@ pl1 <- d |>
 pl2 <- d |>
   ggplot(aes(Rente_Beginn_Datum, Rente_Beginn_Alter, colour = Segment)) +
   geom_point() +
-  geom_abline(slope = 0, intercept = 0, colour = "lightgray")
-plotly::ggplotly(pl2)
+  geom_abline(slope = 0, intercept = 0, colour = "lightgray") 
+
+
+pl2 <-   plotly::ggplotly(pl2)
+
+pl2
 ```
 
 
@@ -481,3 +485,8 @@ d |> ggplot(aes(Alter_heute)) +
 - Fünf Einträge ohne Geschlecht
 - Sehr hohe Rentenauszahlungen 
 - Sehr alte Personen (Sterbedaten verfügbar?) 
+
+
+
+## Fragen 
+- Gibt es Haftpflichtrenten, bei denen das Enddatum fehlt und die schon vom Alter über die Rentengrenze sind? Was ist bei denen anders? 
