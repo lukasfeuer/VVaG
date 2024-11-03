@@ -27,7 +27,7 @@ d <- d_raw |>
     , Geburtsjahr = lubridate::year(Geburtsdatum)
     , Geschlecht = factor(Geschlecht
                           , levels = c(2, 1, NA)
-                          , labels = c("Weiblich", "Männlich"))
+                          , labels = c("Weiblich", "Männlich")) # Weiblich = 2, Männlich = 1
     , Rentendauer = lubridate::interval(Rente_Beginn_Datum, Rente_Ende_Datum) %/% lubridate::years(1)
     , Rente_Beginn_Alter = lubridate::interval(Geburtsdatum, Rente_Beginn_Datum) %/% lubridate::years(1)
     , Rente_Ende_Alter = lubridate::interval(Geburtsdatum, Rente_Ende_Datum) %/% lubridate::years(1)
@@ -116,7 +116,12 @@ Rentenzahlungen_ts |>
                    , Renten_Auszahlung_ib = sum(Renten_Auszahlung_ib)
   )
 
-
+# interessant für Diskussion -> Alter berücksichtigen und Segmente
+d |>
+  transmute(Segment, Rentenbeginn = year(Rente_Beginn_Datum), Geburtsdatum = year(Geburtsdatum)) |>
+  ggplot(aes(Geburtsdatum, Rentenbeginn)) +
+  geom_point(aes(colour = Segment), position = "jitter", alpha = 0.5) +
+  geom_abline(slope = 1, intercept = 0)
 
 
 d |>
@@ -127,7 +132,8 @@ d |>
 d |>
   count(Strasse, sort = T) |>
   ggplot(aes(x = n, y = Strasse)) +
-  geom_point()
+  geom_point() +
+  lims(x = c(0, 40))
 
 
 library(ggridges)
@@ -339,8 +345,8 @@ GGally::ggpairs(select(d, Ort, PLZ, Nr))
 ## - Rentenbeginn als Zeitreihe umrechnen
 ## - ggf. auch Geburtsdaten als Zeitreiehe --> verzerrt da jüngere Geburtstage weniger vorkommen werden
 ## - Renten pro Stadt insgesmat
-## - Zeitreihe/Dichte pro Stadt über die Zeit hinweg -> dieses besondere Diagramm mit gestapelten Wellen
-## - Irgend ein spaß mit den Hausnummer?
+## - Zeitreihe/Dichte pro Stadt über die Zeit hinweg -> Ridgeline
+## - Irgend ein Spaß mit den Hausnummern?
 ##
 ## Auffällig: Ot-PLZ ist eine 1:1 Beziehung - synthetische Daten
 ## Auffällig: es gibt nur ein Enddatum (wahrscheinlich geschätzt wg. Renteneintritt) aber
