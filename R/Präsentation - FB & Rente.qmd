@@ -45,7 +45,7 @@ d_raw <- readxl::read_xlsx("../data/Aufgabe FB.xlsx", skip = 3)
 d <- d_raw |>
   transmute(
     Jahr = factor(Anfalljahr)
-    , Schadensbedarf = `Historischer Schadenbedarf`
+    , Schadenbedarf = `Historischer Schadenbedarf`
     , `Index A` = `Jährliche Inflation Index A`
     , `Index B` = `Jährliche Inflation Index B`
     , `Index C` = `Jährliche Inflation Index C`
@@ -82,8 +82,8 @@ d |>
 
 ## Umrechnung Indizes {.smaller}
 
--   Als Index mit dem Basisjahr 2012 ergibt sich für Index B eine Steigerung von 22% über den Betrachtungszeitraum, dies deckt sich am ehesten mit der Veränderung von 33,1% in den Schadensbedarfen
--   Die Veränderung in Index A mit etwa 35% stimmt jedoch am ehesten mit der absoluten Zunahme in den Schadensbedarfen am Ende des Betrachtungszeitraums überein
+-   Als Index mit dem Basisjahr 2012 ergibt sich für Index B eine Steigerung von 22% über den Betrachtungszeitraum, dies deckt sich am ehesten mit der Veränderung von 33,1% in den Schadenbedarfen
+-   Die Veränderung in Index A mit etwa 35% stimmt jedoch am ehesten mit der absoluten Zunahme in den Schadenbedarfen am Ende des Betrachtungszeitraums überein
 
 
 ```{r}
@@ -145,10 +145,10 @@ d_raw |>
 
 ```
 
--   Indizes B und C sind kollinear
+-   Indizes B und C sind kollinear (Index C liegt konstant 2 Prozentpunkte über Index B)
 -   Paarweise Vergleiche zeigen hohe bivariate Korrelationen von Index B/C mit den jährlichen Schadenbedarfen
 -   Index A korreliert negativ mit den Schadenbedarfen
--   Zur Abschätzung der marginalen Effekte wurde eine einfache Multivariate Regression für Zeitreihen gerechnet (Einschränkungen durch geringe Stichprobengröße bei Interpretation berücksichtigen)
+-   Zur Abschätzung der marginalen Effekte wurde eine Multivariate Regression für Zeitreihen gerechnet (Einschränkungen durch geringe Stichprobengröße bei Interpretation berücksichtigen)
 -   Schadenbedarfe haben einen leichten positiven Trend, daher wird auch ein Modell mit einem `trend()` getestet
 
 
@@ -197,12 +197,12 @@ gg_tsresiduals(fit_schaden_final)
 ## Zusammenfassung
 
 ### Bewertung
-- Index B passt am Besten zu den Daten 
+- Index B passt am besten zu den Daten 
 - Index C wäre eine sinnvolle Alternative 
 - Beide variieren systematisch mit Schadenbedarfen
 
 ### Weitergehende Analyse
-- Index A: Einfluss des Extremwerte und Einfluss auf Ergebnisse - ggf. Korrektur
+- Index A: Einfluss der Extremwerte und Einfluss auf Ergebnisse - ggf. Korrektur
 - Vergleich der Quellen für Index B & C
 - Breiterer Betrachtungszeitraum 
 
@@ -238,7 +238,7 @@ gg_tsresiduals(fit_schaden_final)
 
 -   Alle Datumswerte ISO-Konvertiert (Origin = `1899-12-30 UTC`)
 -   Geburtsjahr
--   Rentendauer (bei vorhandendem Enddatum)
+-   Rentendauer (bei vorhandenem Enddatum)
 -   Alter bei Rentenbeginn
 -   Alter bei Rentenende
 -   Alter heute (05.11.2024)
@@ -291,9 +291,9 @@ d <- d_raw |>
 
 ## Überblick {.smaller}
 
--   Einige Extremwerte in der Höhe der Rentenauszahlung (TODO: leaverage?)
+-   Einige Extremwerte in der Höhe der Rentenauszahlung 
 -   499 der 600 Einträge entfallen auf das Segment Unfall
--   Der Rest enfällt auf Kraftfahrthaftpflicht (n = 64) und Heilwesenhaftpflicht (n = 25)
+-   Der Rest entfällt auf Kraftfahrthaftpflicht (n = 64) und Heilwesenhaftpflicht (n = 25)
 -   Sehr wenige Fälle für Privathaftpflicht (n = 3) und Betriebshaftpflicht (n = 9)
 
 ```{r}
@@ -332,7 +332,7 @@ GGally::ggpairs(x, mapping = aes(colour = Segment, alpha = 0.5)) +
 -   Kein Schlüssel für Zuordnung vorgegeben, Kodierung nach [ISO/IEC 5218](https://de.wikipedia.org/wiki/Datenstandards_zur_Beschreibung_des_Geschlechts) angenommen
 -   Beide Ausprägungen etwa gleich häufig vorhanden
 -   Fünf fehlende Werte
--   Keine großen Effekte zwischen den Geschlechtern (geringer als erwartet)
+
 
 ### Vergleich Rentenauszahlungen
 
@@ -391,7 +391,7 @@ d |>
 
 ## Verteilung Rentenauszahlung
 
--   Verteilung der Renten sind log-normal
+-   Verteilung der Renten ist log-normal
 
 ```{r}
 #| echo: true
@@ -408,13 +408,13 @@ d |>
 
 ## Kummulierte Rentenauszahlungen {.smaller}
 
--   Keine Sterbeinformation
+-   Keine Sterbedaten
 -   Hinterlegte Rentenenddaten liegen fast ausschließlich in der Zukunft
--   Korrektur für Inflation (Daten für Verbraucherpreisindex nur bis 1992)
+-   Inflationsbereinigung (Daten für Verbraucherpreisindex nur bis 1992)
 -   Annahmen
     -   Jährliche Anpassung der Renten (alleinig) basierend auf Verbraucherpreisindex
     -   Rentenauszahlung erfolgt monatlich
-    -   Auszahlungen in €
+    -   Auszahlungen in Euro
 -   Seit 1992 wurden etwa 432 Mio. € ausgezahlt (477 Mio. € ohne Anpassung)
 
 ```{r}
@@ -474,7 +474,7 @@ Rentenzahlungen_ts |>
 
 ## Rentenbeginn und Alter {.smaller}
 
--   Unterschiedlichen Verteilungen pro Segment
+-   Unterschiedliche Verteilungen pro Segment
 -   Drei Fälle, bei denen der Rentenbeginn z.T. mehrere Jahre vor der Geburt liegt
 -   Unfallrente beginnt hier häufig erst (vermeintlich) mit der gesetzlichen Altersrente, jedoch zunehmend im höheren Alter
 -   Rentenbeginn für die Haftpflicht-Segmente liegt fast ausnahmslos unterhalb des gesetzlichen Rentenalters
@@ -528,7 +528,7 @@ pl1
 
 -   Enddatum für die Rente ist nur in 33 Fällen hinterlegt
 -   Fast ausschließlich für Kraftfahrthaftpflicht (n = 24) und nie im Segment Unfall
--   Alter zum hinterlegten End-Zeitpunkt ist für KF- und Privat- Haftpflicht zum Zeitpunkt des vermeitlichen Beginns der gesetzlichen Altersrente
+-   Alter zum hinterlegten End-Zeitpunkt ist für Kraftfahrt- und Privathaftpflicht zum Zeitpunkt des vermeintlichen Beginns der gesetzlichen Altersrente
 -   Alter zum Rentenenddatum bei der Heilwesenhaftpflicht deutlich niedriger (regelmäßige Überprüfung?)
 
 ```{r}
@@ -570,7 +570,7 @@ d_s2 |>
 
 -   Errechnetes heutiges Alter (05.11.2024)
 -   Sehr große Anzahl an Personen über 90 und über 100 Jahre (Markierung)
--   Fehlen ggf. Sterbedaten
+-   ggf. fehlende Sterbedaten
 
 ```{r}
 #| echo: true
@@ -585,9 +585,9 @@ d |> ggplot(aes(Alter_heute)) +
 
 ### Weitergehende Analyse 
 
-- Fünf Einträge ohne Geschlecht
-- Detailbetrachtung der Extremwerte insbes. in der Rentenauszahlung, Alter, Rentenbeginn
-- Welche Verträge/Produkte liegen den Renten zugrunde
+- Fünf Einträge ohne Geschlechtsangabe
+- Detailbetrachtung der Extremwerte, insbes. in der Rentenauszahlung, Alter und Rentenbeginn
+- Welche Verträge/Produkte liegen den Renten zugrunde?
 
 
 

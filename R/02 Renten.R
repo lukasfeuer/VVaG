@@ -369,3 +369,7 @@ d_s2 |>
 ## Auffällig: Ot-PLZ ist eine 1:1 Beziehung - synthetische Daten
 ## Auffällig: es gibt nur ein Enddatum (wahrscheinlich geschätzt wg. Renteneintritt) aber
 ##            Sterbedaten wären auch zu berücksichtigen
+
+
+CPI |> mutate(Jahr = (parse_number(Jahr))) |> filter(Jahr >= 2013) |> ggplot(aes(Jahr, Vae)) + geom_line()
+#--> Vergleiche Freie Berufe - Indizes sind nicht der CPI
