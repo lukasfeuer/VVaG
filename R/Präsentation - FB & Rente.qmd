@@ -3,14 +3,14 @@ title: "Case Study"
 subtitle: "Freie Berufe & Rente"
 format: 
   revealjs:
-    theme: [default, ../theme/clean.scss]
+    theme: [default, ../theme/clean_HDI.scss]
     scrollable: true
 editor: visual
 self-contained: true
 author:
   - name: Lukas Feuer
     email: feuerlukas@web.de
-date: last-modified
+date: "05.11.2024"
 ---
 
 # Freie Berufe
@@ -23,13 +23,22 @@ date: last-modified
 
 ```{r}
 #| label: data_load
-#| echo: false
+#| echo: true
+#| code-fold: true
 #| warning: false
 #| message: false
 
 library(tidyverse)
 
 thematic::thematic_off()
+
+hdi_colors <- c(
+  "#3ead16"
+  , "#B7E0A2"
+  , "#2b2b2b"
+  , "#ff4f4f"
+  , "#b7b7b7"
+)
 
 d_raw <- readxl::read_xlsx("../data/Aufgabe FB.xlsx", skip = 3)
 
@@ -47,11 +56,12 @@ d <- d_raw |>
 
 ## Datengrundlage {.smaller}
 
--   Indizes B und C haben einen sehr ähnlichen Verlauf (kolinear siehe unten)
--   Die Veränderungsraten von Index B und Index C kovairiieren auf den ersten Blick eher mit der Zeitreiehe des Schadenbedarfs als Index A
+-   Indizes B und C haben einen sehr ähnlichen Verlauf
+-   Die Veränderungsraten von Index B und Index C kovariieren auf den ersten Blick eher mit der Zeitreihe des Schadenbedarfs als Index A
 
 
 ```{r}
+#| echo: true
 #| code-fold: true
 d |>
   #filter(name != "Schadensbedarf") |> 
@@ -64,7 +74,9 @@ d |>
     #, subtitle = "Veränderungsraten von 2013 bis 2023"
      x = NULL, y = NULL
   ) +
-  theme(legend.position = "none")
+  theme_light() +
+  theme(legend.position = "none") +
+  scale_colour_manual(values = hdi_colors)
 ```
 
 
@@ -75,6 +87,7 @@ d |>
 
 
 ```{r}
+#| echo: true
 #| code-fold: true
 
 d_raw |>
@@ -106,13 +119,16 @@ tribble(
     , subtitle = "Indizes von 2013 bis 2023, Basisjahr = 2012"
     , x = NULL, y = NULL
   ) +
-  theme(legend.position = "none")
+  scale_colour_manual(values = hdi_colors) +
+  theme_light() +
+  theme(legend.position = "none") 
 ```
 
 
 ## Quantifizierte Zusammenhänge {.smaller}
 
 ```{r}
+#| echo: true
 #| code-fold: true
 #| warning: false
 
@@ -120,7 +136,7 @@ library(fpp3)
 
 d_raw |> 
   rename(
-    Schadensbedarf = `Historischer Schadenbedarf`
+    Schadenbedarf = `Historischer Schadenbedarf`
     , `Index A` = `Jährliche Inflation Index A`
     , `Index B` = `Jährliche Inflation Index B`
     , `Index C` = `Jährliche Inflation Index C`
@@ -129,20 +145,21 @@ d_raw |>
 
 ```
 
--   Indizes B und C sind perfekt kolinear
--   Paarweise Vergleiche zeigen hohe bivariate Korrelationen von Index B/C mit den jährlichen Schadensbedarfen
--   Index A korreliert negativ mit den Schadensbedarfen
--   Zur Abschätzung der marginalen Effekte wird eine einfache Multivariate Regression für Zeitreihen gerechnet (Einschränkungen durch geringe Stichprobengröße bei Interpretation berücksichtigen)
--   Schadensbedarfe haben scheinbar einen leichten positiven Trend, daher wird auch ein Modell mit einem `trend()` getestet
+-   Indizes B und C sind kollinear
+-   Paarweise Vergleiche zeigen hohe bivariate Korrelationen von Index B/C mit den jährlichen Schadenbedarfen
+-   Index A korreliert negativ mit den Schadenbedarfen
+-   Zur Abschätzung der marginalen Effekte wurde eine einfache Multivariate Regression für Zeitreihen gerechnet (Einschränkungen durch geringe Stichprobengröße bei Interpretation berücksichtigen)
+-   Schadenbedarfe haben einen leichten positiven Trend, daher wird auch ein Modell mit einem `trend()` getestet
 
 
 ## Modellvergleiche
 
 -   Gesamtheitliche Betrachtung der Informationskriterien zeigt, dass ein Modell nur mit Index B zu bevorzugen ist, auch wenn R^2^ dadurch nicht maximiert wird
--   Ein Trend verbessert die Varianzaufklärung, ist jedoch insbesondere unter Berücksichtigung des AICc keine bedeutende Ergänzung für das Modell
+-   Ein Trend verbessert die Varianzaufklärung, ist jedoch insbesondere unter Berücksichtigung des AIC~c~ keine bedeutende Ergänzung für das Modell
 -   Vergleiche der Modelle zeigen damit auch keinen zusätzlichen Informationszugewinn durch das Einbeziehen von Index A
 
 ```{r}
+#| echo: true
 #| code-fold: true
 fit_schaden <- d_raw |> 
   tsibble(index = Anfalljahr) |> 
@@ -161,6 +178,7 @@ glance(fit_schaden) |>
 ## Finales Modell
 
 ```{r}
+#| echo: true
 #| code-fold: true
 
 fit_schaden_final <- d_raw |> 
@@ -178,49 +196,17 @@ gg_tsresiduals(fit_schaden_final)
 
 ## Zusammenfassung
 
-> **Index B bildet insgesamt zwar nicht den gesamten Effekt in der Entwicklung der Schadensbedarfe ab, jedoch wäre er basierend auf den verfügbaren Informationen ein vielversprechender Prädiktor.**
+### Bewertung
+- Index B passt am Besten zu den Daten 
+- Index C wäre eine sinnvolle Alternative 
+- Beide variieren systematisch mit Schadenbedarfen
 
-TODO: haben wir in Zeitreihe A einen Outlier und wie würde dies die Ergebnisse verändern?
+### Weitergehende Analyse
+- Index A: Einfluss des Extremwerte und Einfluss auf Ergebnisse - ggf. Korrektur
+- Vergleich der Quellen für Index B & C
+- Breiterer Betrachtungszeitraum 
 
 # Renten
-
-```{r}
-#| label: data_load 2
-#| echo: false
-#| warning: false
-#| message: false
-
-library(tidyverse)
-library(GGally)
-library(fpp3)
-
-thematic::thematic_off()
-
-d_raw <- readxl::read_xlsx("../data/Renten.xlsx")
-
-d <- d_raw |>
-  mutate(
-    Nummer = NULL
-    , Segment = factor(Segment)
-    , Rente_Beginn_Datum = lubridate::as_date(Rente_Beginn_Datum, origin = "1899-12-30 UTC")
-    , Rente_Ende_Datum = lubridate::as_date(Rente_Ende_Datum, origin = "1899-12-30 UTC")
-    , Geburtsdatum = lubridate::as_date(Geburtsdatum, origin = "1899-12-30 UTC")
-    , Geburtsjahr = lubridate::year(Geburtsdatum)
-    , Geschlecht = factor(Geschlecht
-                          , levels = c(2, 1, NA)
-                          , labels = c("Weiblich", "Männlich")) 
-    , Rentendauer = lubridate::interval(Rente_Beginn_Datum, Rente_Ende_Datum) %/% lubridate::years(1)
-    , Rente_Beginn_Alter = lubridate::interval(Geburtsdatum, Rente_Beginn_Datum) %/% lubridate::years(1)
-    , Rente_Ende_Alter = lubridate::interval(Geburtsdatum, Rente_Ende_Datum) %/% lubridate::years(1)
-    , Ort = factor(str_extract(Adresse, "\\w+$"))
-    , PLZ = factor(str_squish(str_extract(Adresse, "[:space:]\\d{5}[:space:]")))
-    , Strasse = factor(str_squish(str_extract(Adresse, "^\\D+(?=\\d)")))
-    , Nr = parse_number(str_extract(Adresse, "[:space:]\\d{1,3}(?=,)"))
-    , Rentenmonate = lubridate::interval(Rente_Beginn_Datum, lubridate::as_date("2024-11-05")) %/% months(1)
-    , Alter_heute = lubridate::interval(Geburtsdatum, lubridate::as_date("2024-11-05")) %/% lubridate::years(1)
-)
-
-```
 
 ## Fragestellungen
 
@@ -263,6 +249,45 @@ d <- d_raw |>
 
 ::::
 
+```{r}
+#| label: data_load 2
+#| echo: true
+#| code-fold: true
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(GGally)
+library(fpp3)
+
+thematic::thematic_off()
+
+d_raw <- readxl::read_xlsx("../data/Renten.xlsx")
+
+d <- d_raw |>
+  mutate(
+    Nummer = NULL
+    , Segment = factor(Segment)
+    , Rente_Beginn_Datum = lubridate::as_date(Rente_Beginn_Datum, origin = "1899-12-30 UTC")
+    , Rente_Ende_Datum = lubridate::as_date(Rente_Ende_Datum, origin = "1899-12-30 UTC")
+    , Geburtsdatum = lubridate::as_date(Geburtsdatum, origin = "1899-12-30 UTC")
+    , Geburtsjahr = lubridate::year(Geburtsdatum)
+    , Geschlecht = factor(Geschlecht
+                          , levels = c(2, 1, NA)
+                          , labels = c("Weiblich", "Männlich")) 
+    , Rentendauer = lubridate::interval(Rente_Beginn_Datum, Rente_Ende_Datum) %/% lubridate::years(1)
+    , Rente_Beginn_Alter = lubridate::interval(Geburtsdatum, Rente_Beginn_Datum) %/% lubridate::years(1)
+    , Rente_Ende_Alter = lubridate::interval(Geburtsdatum, Rente_Ende_Datum) %/% lubridate::years(1)
+    , Ort = factor(str_extract(Adresse, "\\w+$"))
+    , PLZ = factor(str_squish(str_extract(Adresse, "[:space:]\\d{5}[:space:]")))
+    , Strasse = factor(str_squish(str_extract(Adresse, "^\\D+(?=\\d)")))
+    , Nr = parse_number(str_extract(Adresse, "[:space:]\\d{1,3}(?=,)"))
+    , Rentenmonate = lubridate::interval(Rente_Beginn_Datum, lubridate::as_date("2024-11-05")) %/% months(1)
+    , Alter_heute = lubridate::interval(Geburtsdatum, lubridate::as_date("2024-11-05")) %/% lubridate::years(1)
+)
+
+```
+
 
 ## Überblick {.smaller}
 
@@ -272,6 +297,7 @@ d <- d_raw |>
 -   Sehr wenige Fälle für Privathaftpflicht (n = 3) und Betriebshaftpflicht (n = 9)
 
 ```{r}
+#| echo: true
 #| code-fold: true
 #| warning: false
 x <- d |>
@@ -279,7 +305,7 @@ x <- d |>
          , !is.na(Geschlecht)
          , Segment %in% c("Unfall", "Kraftfahrthaftpflicht", "Heilwesenhaftpflicht")
          , ) |>
-  select("Renten_Auszahlung", "Geschlecht", "Segment", "Geburtsjahr", "Rente_Beginn_Alter") #
+  select("Renten_Auszahlung", "Geschlecht", "Segment", "Alter_heute", "Rente_Beginn_Alter") #
 
 GGally::ggpairs(x)
 
@@ -289,10 +315,15 @@ GGally::ggpairs(x)
 ## Überblick
 
 ```{r}
+#| echo: true
 #| code-fold: true
 #| warning: false
 
-GGally::ggpairs(x, mapping = aes(colour = Segment, alpha = 0.5))
+GGally::ggpairs(x, mapping = aes(colour = Segment, alpha = 0.5)) +
+  scale_fill_manual(values = hdi_colors) +
+  scale_colour_manual(values = hdi_colors) +
+  theme_light() +
+  theme(text = element_text(size = 8))
 
 ```
 
@@ -303,15 +334,22 @@ GGally::ggpairs(x, mapping = aes(colour = Segment, alpha = 0.5))
 -   Fünf fehlende Werte
 -   Keine großen Effekte zwischen den Geschlechtern (geringer als erwartet)
 
-TODO: GGally nach Geschlecht
+### Vergleich Rentenauszahlungen
 
 ```{r}
+#| echo: true
 #| code-fold: true
 #| warning: false
+#| layout: [[1,1]]
 d |> 
   filter(Segment == "Unfall") |> 
   summarise(mean= mean(Renten_Auszahlung), median = median(Renten_Auszahlung), n = n(), .by = Geschlecht) |> 
-  knitr::kable()
+  knitr::kable(caption = "Segment Unfall")
+
+d |> 
+  filter(Segment == "Kraftfahrthaftpflicht") |> 
+  summarise(mean= mean(Renten_Auszahlung), median = median(Renten_Auszahlung), n = n(), .by = Geschlecht) |> 
+  knitr::kable(caption = "Segment Kraftfahrthaftpflicht")
 ```
 
 ## Ort
@@ -323,6 +361,7 @@ d |>
 
 
 ```{r}
+#| echo: true
 #| code-fold: true
 #| warning: false
 # layout: [[1,1]]
@@ -339,6 +378,9 @@ d |>
 ---
 
 ```{r}
+#| echo: true
+#| code-fold: true
+#| warning: false
 d |>
   count(Strasse, sort = T) |>
   ggplot(aes(x = n, y = Strasse)) +
@@ -352,6 +394,7 @@ d |>
 -   Verteilung der Renten sind log-normal
 
 ```{r}
+#| echo: true
 #| code-fold: true
 #| warning: false
 d |>
@@ -360,7 +403,7 @@ d |>
     , Renten_Auszahlung_log = log(Renten_Auszahlung)
   ) |>
   ggplot(aes(Renten_Auszahlung_log)) +
-  geom_histogram(bins = 45, fill = "darkgreen", color = "lightgray")
+  geom_histogram(bins = 45, fill = "#3ead16", color = "lightgray", alpha = 0.7) 
 ```
 
 ## Kummulierte Rentenauszahlungen {.smaller}
@@ -375,6 +418,7 @@ d |>
 -   Seit 1992 wurden etwa 432 Mio. € ausgezahlt (477 Mio. € ohne Anpassung)
 
 ```{r}
+#| echo: true
 #| code-fold: true
 #| warning: false
 # Korrektur für Inflation?
@@ -416,8 +460,8 @@ Rentenzahlungen_ts |>
             , Renten_Auszahlung_ib = sum(Renten_Auszahlung_ib)
              ) |>
   ggplot(aes(value)) +
-  geom_line(aes(y = Renten_Auszahlung_ib, colour = "darkred")) +
-  geom_line(aes(y = Renten_Auszahlung), colour = "darkgreen") +
+  geom_line(aes(y = Renten_Auszahlung_ib, colour = "#ff4f4f")) +
+  geom_line(aes(y = Renten_Auszahlung), colour = "#3ead16") +
   theme(legend.position = "none") +
   scale_y_continuous(labels = scales::dollar_format(prefix = "€")) +
   labs(x = NULL, y = NULL,
@@ -437,12 +481,14 @@ Rentenzahlungen_ts |>
 -   Betriebs- und Privathaftpflicht nicht interpretierbar
 
 ```{r}
+#| echo: true
 #| code-fold: true
 #| warning: false
 pl2 <- d |>
   ggplot(aes(Rente_Beginn_Datum, Rente_Beginn_Alter, colour = Segment)) +
   geom_point() +
-  geom_abline(slope = 0, intercept = 0, colour = "lightgray") 
+  geom_abline(slope = 0, intercept = 0, colour = "lightgray") +
+  scale_colour_manual(values = rev(hdi_colors))
 
 
 pl2 <-   plotly::ggplotly(pl2)
@@ -453,11 +499,12 @@ pl2
 ## Rentenbeginn {.smaller}
 
 -   Große Unterschiede zwischen den Segmenten
--   Keine eindeutige Saisonalität (Monat/Quartal)
+-   Keine eindeutige Saisonalität (Quartal)
 -   Unfall 2011: Änderungen in der gesetzlichen Altersrente
--   Zeitliche Häufung ggf. auf unterschiedliche Produkte zurückführbar (z.B. Heilwesen: hier hat HDI deutlich längere Erfahrung)
+-   Zeitliche Häufung ggf. auf unterschiedliche Produkte zurückführbar
 
 ```{r}
+#| echo: true
 #| code-fold: true
 #| warning: false
 pl1 <- d |>
@@ -467,9 +514,12 @@ pl1 <- d |>
     , Segment
   ) |>
   count(ym, Segment) |>
-  tsibble(index = ym, key = Segment) |>
-  autoplot() |> 
-  plotly::ggplotly()
+  tsibble(index = ym, key = Segment) |> 
+  ggplot(aes(ym, n)) +
+  geom_line(aes(colour = Segment)) +
+  scale_color_manual(values = rev(hdi_colors))  
+
+pl1 <- plotly::ggplotly(pl1)
 
 pl1
 ```
@@ -482,20 +532,39 @@ pl1
 -   Alter zum Rentenenddatum bei der Heilwesenhaftpflicht deutlich niedriger (regelmäßige Überprüfung?)
 
 ```{r}
+#| echo: true
 #| code-fold: true
 #| warning: false
+#| layout: [[1,1,1]]
 d |>
   ggplot(aes(Rente_Ende_Alter)) +
-  geom_histogram(bins = 20, aes(fill = Segment))
-# Bei diesen Renten (alle nich-Unfall) - wird die Rente nur bis zum (voraussichtlichen)
-# Entrittsdatum der gesetzlichen Altersrente gezahlt, da es sich um eine Rente zum Ausgleich
-# des Verdienstausfalls handelt
-# Frage: was ist bei den Haftpflicht-Renten anders, welche kein Enddatum hinterlegt haben?
-#     --> haben sich ggf. schon in Rente befunden?
-#
-# KF-Haftpflicht: alle in der gleichen PLZ, allerdings untersch. Straßen
+  geom_histogram(bins = 20, aes(fill = Segment), color = "lightgray") +
+  scale_fill_manual(values = c("#ff4f4f", "#2b2b2b", "#B7E0A2")) +
+  labs(y="Anzahl", x = NULL, title = "Alter zum hinterlegten Enddatum") +
+  theme_minimal()
 
+d_s2 <- d |> 
+  filter(Segment == "Kraftfahrthaftpflicht") |> 
+  mutate(Segment2 = ifelse(is.na(Rente_Ende_Datum), "Ohne Enddatum", "Mit Enddatum")) 
+
+d_s2 |> 
+  ggplot(aes(Renten_Auszahlung, Segment2, fill = Segment)) +
+  geom_boxplot() +
+  theme_minimal() +
+  labs(x = NULL, y = NULL, title = "Rentenauszahlung im Segement Kraftfahrthaftpflicht") +
+  scale_fill_manual(values = hdi_colors) +
+  theme(legend.position = "none")
+
+d_s2 |> 
+  ggplot(aes(Alter_heute, Segment2, fill = Segment)) +
+  geom_boxplot() +
+  theme_minimal() +
+  labs(x = NULL, y = NULL, title = "Altersverteilung im Segement Kraftfahrthaftpflicht") +
+  scale_fill_manual(values = hdi_colors[2]) +
+  theme(legend.position = "none")
 ```
+
+
 
 ## Alter {.smaller}
 
@@ -504,26 +573,24 @@ d |>
 -   Fehlen ggf. Sterbedaten
 
 ```{r}
+#| echo: true
 #| code-fold: true
 #| warning: false
 d |> ggplot(aes(Alter_heute)) +
-  geom_histogram() +
+  geom_histogram(fill = "#3ead16", color = "lightgray", alpha = 0.7) +
   geom_vline(xintercept = 100)
 ```
 
-## Ausreißer
+## Zusammenfassung 
 
--   Für vertiefte zukünftige Analysen
--   Fünf Einträge ohne Geschlecht
--   Sehr hohe Rentenauszahlungen
--   Sehr alte Personen (Sterbedaten verfügbar?)
+### Weitergehende Analyse 
 
-## Fragen
+- Fünf Einträge ohne Geschlecht
+- Detailbetrachtung der Extremwerte insbes. in der Rentenauszahlung, Alter, Rentenbeginn
+- Welche Verträge/Produkte liegen den Renten zugrunde
 
--   Gibt es Haftpflichtrenten, bei denen das Enddatum fehlt und die schon vom Alter über die Rentengrenze sind? Was ist bei denen anders?
 
----
 
-Vielen Dank für die Aufmerksamkeit!
+## Vielen Dank für die Aufmerksamkeit!
 
-Der Code für die präsentierten Analysen ist [hier](https://github.com/lukasfeuer/VVaG) zu finden. 
+Der Code für die präsentierten Analysen ist [hier](https://github.com/lukasfeuer/VVaG) zu finden

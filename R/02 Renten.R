@@ -186,9 +186,10 @@ d |>
 
 
 # ggf. sieht das noch eindeutiger aus, wenn "Rente_Beginn_Alter" nicht nur grob auf Jahr gerechnet
+# KF- und P-Haftpflicht: weil bis Rentenalter kalkulert
 d |> filter(!is.na(Rente_Ende_Datum)) |>
   ggplot(aes(Rente_Beginn_Alter, Rentendauer))+
-  geom_point()
+  geom_point(aes(colour = Segment))
 
 d |> count(Rentendauer, Segment, sort = T) |> print(n = 50)
 
@@ -327,6 +328,23 @@ d |>
 d |> count(Nr, sort = T) |> plot()
 GGally::ggpairs(select(d, Ort, PLZ, Nr))
 
+
+
+d_s2 <- d |>
+  filter(Segment == "Kraftfahrthaftpflicht") |>
+  mutate(Segment2 = ifelse(is.na(Rente_Ende_Datum), "Ohne Enddatum", "Mit Enddatum"))
+
+d_s2 |>
+  ggplot(aes(Renten_Auszahlung, Segment2)) +
+  geom_boxplot()
+
+d_s2 |>
+  ggplot(aes(Alter_heute, Segment2)) +
+  geom_boxplot()
+
+d_s2 |>
+  ggplot(aes(Geburtsjahr, Segment2)) +
+  geom_boxplot()
 
 ## TODO
 ## - Adressen aufteilen - Darstellung geographische Verteilung
