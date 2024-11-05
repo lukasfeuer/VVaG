@@ -406,7 +406,7 @@ d |>
   geom_histogram(bins = 45, fill = "#3ead16", color = "lightgray", alpha = 0.7) 
 ```
 
-## Kummulierte Rentenauszahlungen {.smaller}
+## Historische Rentenauszahlungen {.smaller}
 
 -   Keine Sterbedaten
 -   Hinterlegte Rentenenddaten liegen fast ausschließlich in der Zukunft
@@ -496,6 +496,34 @@ pl2 <-   plotly::ggplotly(pl2)
 pl2
 ```
 
+---
+
+- Rentenauszahlungen im Segment Unfall
+- Niedrige Renten werden fast ausschließlich im hohen Alter ausgezahlt
+- Markierungen bei 65 und 67 Jahren
+
+```{r}
+#| echo: true
+#| code-fold: true
+#| warning: false
+pl3 <- d |> 
+  filter(Segment == "Unfall") |> 
+  ggplot(aes(Rente_Beginn_Alter, Renten_Auszahlung)) + 
+  geom_point(position = "jitter", color = "#3ead16", alpha = 0.3) +
+  geom_vline(xintercept = 67) +
+  geom_vline(xintercept = 65, linetype = 2) +
+  theme_minimal() +
+  labs(
+    x = "Alter zum Rentenbeginn"
+    , y = "Rentenauszahlung"
+  )
+
+pl3 <- plotly::ggplotly(pl3)
+
+pl3
+```
+
+
 ## Rentenbeginn {.smaller}
 
 -   Große Unterschiede zwischen den Segmenten
@@ -570,7 +598,7 @@ d_s2 |>
 
 -   Errechnetes heutiges Alter (05.11.2024)
 -   Sehr große Anzahl an Personen über 90 und über 100 Jahre (Markierung)
--   ggf. fehlende Sterbedaten
+-   ggf. fehlende Sterbedaten / Selektionsbias
 
 ```{r}
 #| echo: true
@@ -586,6 +614,7 @@ d |> ggplot(aes(Alter_heute)) +
 ### Weitergehende Analyse 
 
 - Fünf Einträge ohne Geschlechtsangabe
+- (Fehlende?) Enddaten/Sterbedaten
 - Detailbetrachtung der Extremwerte, insbes. in der Rentenauszahlung, Alter und Rentenbeginn
 - Welche Verträge/Produkte liegen den Renten zugrunde?
 
